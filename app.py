@@ -21,18 +21,21 @@ st.set_page_config(
 # --- KONEKSI DATABASE (SUPABASE / POSTGRESQL & SQLITE) ---
 def get_db_connection():
     if "DATABASE_URL" in st.secrets:
-        url = urlparse(st.secrets["DATABASE_URL"])
-        conn = psycopg2.connect(
-            database=url.path[1:],
-            user=url.username,
-            password=url.password,
-            host=url.hostname,
-            port=url.port
-        )
-        return conn
+        # Coba langsung connect pakai string URI rahasia dari Secrets
+        try:
+            return psycopg2.connect(st.secrets["DATABASE_URL"])
+        except Exception:
+            # Fallback jika format URL terpisah
+            url = urlparse(st.secrets["DATABASE_URL"])
+            return psycopg2.connect(
+                database=url.path[1:],
+                user=url.username,
+                password=url.password,
+                host=url.hostname,
+                port=url.port or 5432
+            )
     else:
         return sqlite3.connect('sppg_streamlit.db', check_same_thread=False)
-
 def init_db():
     conn = get_db_connection()
     cursor = conn.cursor()
